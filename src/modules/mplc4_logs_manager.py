@@ -10,7 +10,7 @@ from ..config import MAX_DISK_USAGE, MAX_LOGS_COUNT, _MPLC4_LOG_DIR
 class MPLC4LogsManager:
 
     def __init__(self) -> None:
-        self._logs_owner: str = f'{self.__class__.__name__}'
+        self.cls_name: str = self.__class__.__name__
 
 
     def get_logs(self, which: str) -> tuple:
@@ -35,10 +35,11 @@ class MPLC4LogsManager:
             return tuple(logfile for logfile in logs if usage_filter(logfile))
 
         except Exception as error:
-            logging.error(f'{self._logs_owner}: ошибка получения списка файлов: {error}')
+            logging.error(f'{self.cls_name}: ошибка получения списка файлов: {error}')
             sys.exit(1)
 
 
+    # REFACT Перенести отсюда в класс System
     def is_limits_reached(self) -> bool:
         return \
             len(self.get_logs('all')) >= MAX_LOGS_COUNT or \
@@ -50,10 +51,10 @@ class MPLC4LogsManager:
             files = sorted(logfile.name for logfile in self.get_logs(which))
 
             if not files:
-                logging.info(f'{self._logs_owner}: список запрашиваемых файлов ({which}) пуст')
+                logging.info(f'{self.cls_name}: список запрашиваемых файлов ({which}) пуст')
                 return
 
-            logging.info(f'{self._logs_owner}: удаление файлов ({which}): {files}..')
+            logging.info(f'{self.cls_name}: удаление файлов ({which}): {files}..')
 
             file_names: str = ' '.join(f'{_MPLC4_LOG_DIR}/{file}' for file in files)
 
@@ -63,7 +64,7 @@ class MPLC4LogsManager:
             isremoved: bool = len(files) > len(self.get_logs(which))
 
             if not shell.stderr and isremoved:
-                logging.info(f'{self._logs_owner}: файлы успешно удалены')
+                logging.info(f'{self.cls_name}: файлы успешно удалены')
                 return True
 
             elif shell.stderr or not isremoved:
@@ -72,5 +73,5 @@ class MPLC4LogsManager:
                 raise SystemError(f'неудачное выполнение команды - {error}')
 
         except Exception as exception:
-            logging.error(f'{self._logs_owner}: ошибка удаления файлов: {exception}')
+            logging.error(f'{self.cls_name}: ошибка удаления файлов: {exception}')
             return False

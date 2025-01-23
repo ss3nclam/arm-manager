@@ -21,16 +21,25 @@ try:
             }.get(config['logging']['level'].lower(), 'debug')
         ) if \
             config.getboolean('logging', 'logging') else None
-    
-    getint = lambda option: config.getint('defaults', option)
 
-    MAX_DISK_USAGE: int = getint('max_disk_usage')
-    MAX_LOGS_COUNT: int = getint('max_logs_count')
-    INSPECTION_FREQUENCY: int = getint('inspection_frequency')
+    getstr = lambda section, option: config.get(section, option)
+    getint = lambda section, option: config.getint(section, option)
+
+    MAX_DISK_USAGE: int = getint('defaults', 'max_disk_usage')
+    MAX_LOGS_COUNT: int = getint('defaults', 'max_logs_count')
+    INSPECTION_FREQUENCY: int = getint('defaults', 'inspection_frequency')
     _MPLC4_LOG_DIR: str = '/opt/mplc4/log'
     IGNORED_FILES: tuple = (
         'start_log.txt'
     )
+
+    DB_USERNAME: str = getstr("database", "user")
+    _SIZE_UNITS_K = {
+        "B": 0,
+        "KB": 1,
+        "MB": 2,
+        "GB": 3,
+    }
 
 except Exception as error:
     logging.error(f' ошибка чтения конфига - "{error}", завершение работы..')
