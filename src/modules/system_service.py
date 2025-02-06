@@ -1,82 +1,134 @@
 import logging
-import sys
-
-from .system import System
+import subprocess as sp
 
 
-class SystemService(object):
+class ServiceExistError(Exception):
+    """Исключение, вызываемое при попытке работы с несуществующей службой."""
+    pass
 
-    def __init__(self, name: str) -> None:
-        self.name: str = name
-        self._logs_owner: str = f'{self.__class__.__name__}:{self.name}'
 
+class SystemService:
+    """
+    Класс для управления системными службами через команду `systemctl`.
+
+    :param name: Имя службы. Если имя не заканчивается на `.service`,
+    оно будет добавлено автоматически.
+    :raises ServiceExistError: Если указанная служба не существует.
+    """
+
+    _VALID_ACTIONS = ("start", "stop", "restart")
+
+    def __init__(self, name: str):
+        self._name = name if name.endswith(".service") else name + ".service"
+        if not self._service_exists():
+            raise ServiceExistError(f"службы {self._name!r} не существует")
+        self._log_owner = f"{self.__class__.__name__}:{self._name}"
+
+    def _service_exists(self) -> bool:
+        """
+        Проверяет, существует ли служба в системе.
+
+        :return: `True`, если служба существует, иначе `False`.
+        :rtype: bool
+        """
+        result = sp.run(
+            ["systemctl", "show", "-p", "LoadState", self._name],
+            stdout=sp.PIPE,
+            text=True
+        )
+        return "LoadState=loaded" in result.stdout
 
     @property
-    def state(self):
+    def name(self) -> str:
+        """
+        Возвращает имя службы.
+
+        :return: Имя службы.
+        :rtype: str
+        """
+        return self._name
+
+    @property
+    def state(self) -> str:
+        """
+        Возвращает текущее состояние службы.
+
+        :return: Состояние службы (например, `active`, `inactive`, `failed`).
+        :rtype: str
+        """
+        _log_owner = f"{self._log_owner}:state"
         try:
-            cmd: str = f'sudo systemctl is-active {self.name}'
-            shell = System.run_cmd(cmd)
-            return shell.stdout.strip()
-        except Exception:
-            shell_error: str = shell.stderr.strip()
-            logging.error(f'{self._logs_owner}: ошибка проверки статуса: {shell_error}')
-            return None
+            cmd_args = ["systemctl", "is-active", self._name]
+            cmd = sp.run(cmd_args, stdout=sp.PIPE, text=True)
+            return cmd.stdout.strip()
+        except Exception as err:
+            logging.exception(f"{_log_owner}: ошибка проверки статуса")
 
+    def isactive(self) -> bool:
+        """
+        Проверяет, активна ли служба.
 
-    def isactive(self):
-       return self.state == 'active'
+        :return: `True`, если служба активна, иначе `False`.
+        :rtype: bool
+        """
+        return self.state == "active"
 
+    def _manage_service(self, action: str, timeout: int) -> bool:
+        """
+        Вспомогательный метод для выполнения действий над службой.
 
-    def start(self) -> None:
-        if not self.isactive():
-            logging.info(f'{self._logs_owner}: запуск..')
-            cmd: str = f'sudo systemctl start {self.name}'
-            shell = System.run_cmd(cmd)
+        :param action: Действие (`start`, `stop`, `restart`).
+        :param timeout: Максимальное время выполнения команды (в секундах).
+        :return: `True`, если команда выполнена успешно, иначе `False`.
+        :raises ValueError: Если действие недопустимо.
+        """
+        _log_owner = f"{self._log_owner}:{action}"
+        if action not in self._VALID_ACTIONS:
+            raise ValueError(f"недопустимое действие: {action!r}")
+        elif action == self._VALID_ACTIONS[0] and self.isactive():
+            logging.warning(f"{_log_owner}: сброс запуска, служба уже активна")
+            return True
+        elif action == self._VALID_ACTIONS[1] and not self.isactive():
+            logging.warning(f"{_log_owner}: сброс останова, служба уже неактивна")
+            return True
+        try:
+            cmd_args = ["systemctl", action, self._name]
+            sp.run(cmd_args, check=True, timeout=timeout)
+            logging.info(f"{_log_owner}: команда успешно выполнена")
+            return True
+        except (sp.CalledProcessError, sp.TimeoutExpired) as err:
+            msg = f"ненулевой код возврата ({err.returncode})" \
+                if isinstance(err, sp.CalledProcessError) \
+                else f"исчерпан лимит ожидания ({err.timeout} сек.)"
+            logging.error(f"{_log_owner}: {msg}")
+            return False
+        except Exception as err:
+            logging.exception(f"{_log_owner}: неизвестная ошибка: {err}")
+            return False
 
-            try:
-                if self.isactive():
-                    logging.info(f'{self._logs_owner}: успешно запущена')
+    def start(self, timeout: int = 30) -> bool:
+        """
+        Запускает службу.
 
-                else:
-                    shell_error: str = shell.stderr.strip('\n')
-                    raise SystemError(f'неудачное выполнение команды - {shell_error}')
+        :param timeout: Максимальное время выполнения команды (в секундах).
+        :return: `True`, если команда выполнена успешно, иначе `False`.
+        """
+        return self._manage_service("start", timeout)
 
-            except Exception as error:
-                logging.error(f'{self._logs_owner}: ошибка запуска: {error}')
-                sys.exit(1)
+    def stop(self, timeout: int = 30) -> bool:
+        """
+        Останавливает службу.
 
-        else:
-            logging.warning(f'{self._logs_owner}: уже запущена')
+        :param timeout: Максимальное время выполнения команды (в секундах).
+        :return: `True`, если команда выполнена успешно, иначе `False`.
+        """
+        return self._manage_service("stop", timeout)
 
+    def restart(self, timeout: int = 30) -> bool:
+        """
+        Перезапускает службу.
 
-    def stop(self):
-        # TODO Написать метод для остановки службы
-        pass
-
-
-    def restart(self):
-        if self.isactive():
-            logging.info(f'{self._logs_owner}: перезапуск..')
-            cmd: str = f'sudo systemctl restart {self.name}'
-            shell = System.run_cmd(cmd)
-
-            try:
-                if self.isactive():
-                    logging.info(f'{self._logs_owner}: успешно перезапущена')
-
-                else:
-                    shell_error: str = shell.stderr.strip('\n')
-                    logging.warning(f'{self._logs_owner}: не удалось перезапустить - "{shell_error}", попытка принудительного запуска..')
-
-                    self.start()
-
-                    if not self.isactive():
-                        raise SystemError(f'не удалось перезапустить и принудительно запустить')
-
-            except Exception as error:
-                logging.error(f'{self._logs_owner}: ошибка перезапуска: {error}')
-                sys.exit(1)
-
-        else:
-            logging.warning(f'{self._logs_owner}: неактивна')
-            self.start()
+        :param timeout: Максимальное время выполнения команды (в секундах).
+        :return: `True`, если команда выполнена успешно, иначе `False`.
+        """
+        return self._manage_service("restart", timeout)
