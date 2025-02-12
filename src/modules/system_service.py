@@ -18,11 +18,41 @@ class SystemService:
 
     _VALID_ACTIONS = ("start", "stop", "restart")
 
-    def __init__(self, name: str):
-        self._name = name if name.endswith(".service") else name + ".service"
-        if not self._service_exists():
-            raise ServiceExistError(f"службы {self._name!r} не существует")
-        self._log_owner = f"{self.__class__.__name__}:{self._name}"
+    # def __init__(self, name: str):
+    #     self._name = name if name.endswith(".service") else name + ".service"
+    #     if not self._service_exists():
+    #         raise ServiceExistError(f"службы {self._name!r} не существует")
+    #     self._log_owner = f"{self.__class__.__name__}:{self._name}"
+
+    def __init__(self, *args, **kwargs):
+        """
+        Запрещает создание экземпляра класса напрямую.
+
+        :raises Exception: Всегда вызывает исключение, так как экземпляр
+        должен создаваться через метод `_create`.
+        """
+        raise Exception(
+            f"экземпляр класса {self.__class__.__name__} можно создать только при помощи класса System"
+        )
+
+    @classmethod
+    def _create(cls, name: str):
+        """
+        Создает экземпляр класса `SystemService`.
+
+        :param name: Имя службы.
+        :return: Экземпляр класса `SystemService`.
+        :raises ServiceExistError: Если указанная служба не существует.
+        """
+        obj = object.__new__(cls)
+        obj._name = name if name.endswith(".service") else name + ".service"
+        if not obj._service_exists():
+            raise ServiceExistError(f"службы {obj._name!r} не существует")
+        obj._log_owner = f"{obj.__class__.__name__}:{obj._name}"
+        return obj
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name={self._name!r})"
 
     def _service_exists(self) -> bool:
         """
@@ -32,7 +62,7 @@ class SystemService:
         :rtype: bool
         """
         result = sp.run(
-            ["systemctl", "show", "-p", "LoadState", self._name],
+            ["sudo", "systemctl", "show", "-p", "LoadState", self._name],
             stdout=sp.PIPE,
             text=True
         )
@@ -58,7 +88,7 @@ class SystemService:
         """
         _log_owner = f"{self._log_owner}:state"
         try:
-            cmd_args = ["systemctl", "is-active", self._name]
+            cmd_args = ["sudo", "systemctl", "is-active", self._name]
             cmd = sp.run(cmd_args, stdout=sp.PIPE, text=True)
             return cmd.stdout.strip()
         except Exception as err:
@@ -92,7 +122,7 @@ class SystemService:
             logging.warning(f"{_log_owner}: сброс останова, служба уже неактивна")
             return True
         try:
-            cmd_args = ["systemctl", action, self._name]
+            cmd_args = ["sudo", "systemctl", action, self._name]
             sp.run(cmd_args, check=True, timeout=timeout)
             logging.info(f"{_log_owner}: команда успешно выполнена")
             return True
