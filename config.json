@@ -1,0 +1,13 @@
+{
+    "CLEANER": {
+        "max_disk_usage": 85,
+        "inspection_frequency": 60
+    },
+    "LOGGING": {
+        "format": "%(asctime)s:%(levelname)s:%(message)s",
+        "level": "DEBUG"
+    },
+    "MPLC4": {
+        "user": "postgres"
+    }
+}
