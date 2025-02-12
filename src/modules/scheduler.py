@@ -11,7 +11,7 @@ class Scheduler:
         self.__logs_owner: str = f'{self.__class__.__name__}'
 
         self.__jobs_list = []
-    
+
 
     def job(self, func) -> None:
         func_name: str = func.__name__
@@ -21,17 +21,17 @@ class Scheduler:
 
 
     def run(self) -> None:
-            while True:
-                for job_name, job in self.__jobs_list:
-                    logging.info(f'{self.__logs_owner}:{job_name}: запуск')
+        while True:
+            for job_name, job in self.__jobs_list:
+                logging.info(f'{self.__logs_owner}:{job_name}: запуск')
 
-                    try:
-                        job()
-                        logging.info(f'{self.__logs_owner}:{job_name}: завершение')
+                try:
+                    job()
+                    logging.info(f'{self.__logs_owner}:{job_name}: завершение')
 
-                    except Exception as error:
-                        logging.error(f'{self.__logs_owner}:{job_name}: ошибка запуска - {error}')
-                        exit(1)
+                except Exception as error:
+                    logging.error(f'{self.__logs_owner}:{job_name}: ошибка запуска - {error}')
+                    exit(1)
 
-                logging.info(f'{self.__logs_owner}: ожидание..')
-                time.sleep(INSPECTION_FREQUENCY)
+            logging.info(f'{self.__logs_owner}: ожидание..')
+            time.sleep(INSPECTION_FREQUENCY)
