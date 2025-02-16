@@ -2,6 +2,7 @@ import os
 from ...config import MPLC4_PATH
 from ..system import System
 
+
 # TODO Добавить обработку исключений
 class Journal:
 
@@ -10,7 +11,7 @@ class Journal:
         self._pathdir = MPLC4_PATH + "/log"
 
     def _fetch_logfile_names(self):
-        names_list = os.listdir(self._pathdir)
+        names_list: list = os.listdir(self._pathdir)
         try:
             names_list.remove('start_log.txt')
         finally:
@@ -21,6 +22,7 @@ class Journal:
         return System.get_dir_size(self._pathdir)
 
     def clear(self, all: bool = False):
+        # TODO Добавить логику для настраиваемой очистки
         filepaths_list = (
             f"{self._pathdir}/{name}" for name in self._fetch_logfile_names()
         )
