@@ -18,12 +18,6 @@ class SystemService:
 
     _VALID_ACTIONS = ("start", "stop", "restart")
 
-    # def __init__(self, name: str):
-    #     self._name = name if name.endswith(".service") else name + ".service"
-    #     if not self._service_exists():
-    #         raise ServiceExistError(f"службы {self._name!r} не существует")
-    #     self._log_owner = f"{self.__class__.__name__}:{self._name}"
-
     def __init__(self, *args, **kwargs):
         """
         Запрещает создание экземпляра класса напрямую.
