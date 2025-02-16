@@ -1,4 +1,3 @@
-# REFACT Переписать конфиг в класс
 import logging
 import sys
 import json
@@ -8,21 +7,16 @@ try:
         cfg = dict(json.load(file))
 
     LOGGING_CONFIG = logging.basicConfig(
-        format = cfg['LOGGING']['format'],
-        level = cfg['LOGGING']['level'],
+        format = cfg['logging']['format'],
+        level = cfg['logging']['level'],
     )
-    MAX_DISK_USAGE: int = cfg ["CLEANER"]["max_disk_usage"]
-    INSPECTION_FREQUENCY: int = cfg ["CLEANER"]["inspection_frequency"]
-    MPLC4_PATH = "/opt/mplc4"
-    IGNORED_FILES: tuple = (
+    MAX_DISKUSAGE_PERC: int = cfg["max_diskusage_perc"]
+    INSPECTION_FREQUENCY: int = cfg["inspection_frequency"]
+    MPLC4_PATH: str = cfg["mplc4_path"]
+    IGNORED_FILES = (
         'start_log.txt'
     )
-    _SIZE_UNITS_K = {
-        "B": 0,
-        "KB": 1,
-        "MB": 2,
-        "GB": 3,
-    }
+    PSQL_CFG = cfg["psql"]
 except Exception as error:
     logging.error(f' ошибка чтения конфига - "{error}", завершение работы..')
     sys.exit(1)
