@@ -34,15 +34,35 @@ class System:
         программа завершится с кодом 1.
     """
 
-    _isunix: bool = platform.system() == "Linux"
-    _isroot: bool = os.geteuid() == 0
-    _haslsof: bool = not sp.run(
-        ["which", "lsof"],
-        stdout = sp.DEVNULL,
-        stderr = sp.DEVNULL,
-    ).returncode
-    if not (_isunix or _haslsof or _isroot):
-        sys.exit(1)
+    exit = lambda status: sys.exit(status)
+
+    def _run_quiet(args: list) -> int:
+        """
+        Внутренний метод для выполнения команды без вывода в консоль.
+
+        :param args: Список аргументов команды.
+        :type args: list
+        :return: Код возврата команды.
+        :rtype: int
+        """
+        return sp.run(
+            args,
+            stdout = sp.DEVNULL,
+            stderr = sp.DEVNULL,
+        ).returncode
+
+    try:
+        if platform.system() != "Linux":
+            raise SystemError("система не соответствует требованиям")
+        elif os.geteuid():
+            raise PermissionError("недостаточно прав для запуска")
+        elif _run_quiet(["systemctl", "--version"]):
+            raise SystemError("в системе не обнаружено systemd")
+        elif _run_quiet(["lsof", "-h"]):
+            raise SystemError("в системе не обнаружено lsof")
+    except Exception as err:
+        logging.critical(f"{__qualname__}: {err}")
+        exit(1)
 
     @classmethod
     def _get_cpu_time(cls):
