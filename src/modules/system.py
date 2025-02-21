@@ -223,7 +223,6 @@ class System:
             logging.error(f"{cls.__name__}:isusedfile: {msg}: {err}")
             return False
 
-
     @classmethod
     def get_dir_size(cls, path: str):
         """
@@ -236,6 +235,9 @@ class System:
         """
         try:
             cls._check_is_dir(path)
+
+            # Стандартные средства ЯП
+            # BUG Размеры отличаются от тех, что выводит команда du
             total_size = 0
             for dirpath, _, filenames in os.walk(path):
                 for filename in filenames:
@@ -244,6 +246,14 @@ class System:
                     if size:
                         total_size += size
             return total_size
+
+            # Системная команда
+            # cmd = sp.run(["du", "-b", path], check=True, stdout=sp.PIPE)
+            # if cmd.stdout:
+            #     return int(cmd.stdout.split()[0])
+            # else:
+            #     raise ValueError("вывод команды пуст")
+
         except Exception as err:
             msg = "не удалось получить данные о размере директории"
             logging.error(f"{cls.__name__}:get_dir_size: {msg}: {err}")
