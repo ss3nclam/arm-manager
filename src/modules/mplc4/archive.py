@@ -1,4 +1,6 @@
 import subprocess
+
+from ..system import System
 from ...config import PSQL_CFG
 
 SHELL_PSQL_TEMPLATE = "sudo psql -U {} -c {!r}"
@@ -14,7 +16,11 @@ class Archive:
 
     def __init__(self):
         # self._log_owner = self.__class__.__name__
-        pass
+        self._service = System.get_service("postgresql")
+
+    @property
+    def service(self):
+        return self._service
 
     def _run_sql_cmd(self, cmd: str, capture_output: bool = False):
         std = subprocess.DEVNULL if not capture_output else subprocess.PIPE
@@ -36,6 +42,8 @@ class Archive:
     @property
     def size(self):
         shell = self._run_sql_cmd(DBS_SIZES, True)
+        if shell.returncode:
+            return None
         name_size_gen = (
             map(str.strip, line.split(" |")) \
             for line in shell.stdout.split("\n")[2:-3]
@@ -45,7 +53,7 @@ class Archive:
             if name in PSQL_CFG["manage_dbs"]
         )
 
-    def recreate_dbs(self):
+    def recreate(self):
         for dbname in PSQL_CFG["manage_dbs"]:
             self._drop_db(dbname)
             self._create_db(dbname)
