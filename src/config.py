@@ -1,9 +1,11 @@
 import logging
+import os
 import sys
 import json
 
 try:
-    with open('./config.json', "r") as file:
+    _PATH = os.path.dirname(os.path.abspath(__file__))
+    with open(f'{_PATH}/../config.json', "r") as file:  # FIXME Исправить "шаг назад" в пути
         cfg = dict(json.load(file))
 
     LOGGING_CONFIG = logging.basicConfig(
