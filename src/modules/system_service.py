@@ -73,7 +73,7 @@ class SystemService:
         return self._name
 
     @property
-    def state(self) -> str:
+    def state(self):
         """
         Возвращает текущее состояние службы.
 
