@@ -2,8 +2,6 @@ import logging
 import time
 from sys import exit
 
-from ..config import INSPECTION_FREQUENCY
-
 
 class Scheduler:
 
@@ -18,7 +16,7 @@ class Scheduler:
         logging.info(f'{cls._logs_owner}:{func_name}: работа запланирована')
 
     @classmethod
-    def run(cls) -> None:
+    def run(cls, interval: int) -> None:
         while True:
             for job_name, job in cls._jobs:
                 logging.info(f'{cls._logs_owner}:{job_name}: запуск')
@@ -32,4 +30,4 @@ class Scheduler:
                     exit(1)
 
             logging.info(f'{cls._logs_owner}: ожидание..')
-            time.sleep(INSPECTION_FREQUENCY)
+            time.sleep(interval)
