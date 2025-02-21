@@ -1,8 +1,7 @@
 from collections import namedtuple
+from datetime import datetime
 import json
 import logging
-import re
-import time
 
 from ...config import MPLC4_PATH
 
@@ -21,6 +20,8 @@ class CurrentProject:
     def __init__(self):
         self._log_owner = self.__class__.__name__
 
+    # BUG Возможно тормозит загрузку проекта на арм
+    # TESTME Протестировать без vpn
     def _read_project_config(self):
         """
         Читает конфигурационный файл проекта (ProjInfo.json)
@@ -53,12 +54,7 @@ class CurrentProject:
             ).get("Дата последнего изменения", None)
             last_modified_time = None \
                 if not last_modified_time_str \
-                else time.strptime(
-                    re.sub(
-                        r"\.\d+$", "", last_modified_time_str
-                    ),
-                    r"%d.%m.%Y %H:%M:%S",
-                )
+                else datetime.strptime(last_modified_time_str, "%d.%m.%Y %H:%M:%S.%f")
             return ntuple_projectinfo(name, last_modified_time)
         except FileNotFoundError:
             logging.warning(f"{self._log_owner}: файл конфигурации не найден")
