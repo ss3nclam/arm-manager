@@ -1,6 +1,7 @@
 {
     "max_diskusage_perc": 85,
     "inspection_frequency": 60,
+    "exit_if_cleaning_fails": false,
     "mplc4_path": "/opt/mplc4",
     "psql": {
         "user": "postgres",
