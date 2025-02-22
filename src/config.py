@@ -14,6 +14,7 @@ try:
     )
     MAX_DISKUSAGE_PERC: int = cfg["max_diskusage_perc"]
     INSPECTION_FREQUENCY: int = cfg["inspection_frequency"]
+    EXIT_IF_FAILS: bool = cfg["exit_if_cleaning_fails"]
     MPLC4_PATH: str = cfg["mplc4_path"]
     IGNORED_FILES = (
         'start_log.txt'
