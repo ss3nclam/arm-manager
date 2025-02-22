@@ -53,15 +53,16 @@ class System:
 
     try:
         if platform.system() != "Linux":
-            raise SystemError("система не соответствует требованиям")
+            raise SystemError("Система не соответствует требованиям")
         elif os.geteuid():
-            raise PermissionError("недостаточно прав для запуска")
+            raise PermissionError("Недостаточно прав для запуска")
         elif _run_quiet(["systemctl", "--version"]):
-            raise SystemError("в системе не обнаружено systemd")
+            raise SystemError("В системе не обнаружено systemd")
         elif _run_quiet(["lsof", "-h"]):
-            raise SystemError("в системе не обнаружено lsof")
+            raise SystemError("В системе не обнаружено lsof")
     except Exception as err:
-        logging.critical(f"{__qualname__}: {err}")
+        # logging.critical(f"{__qualname__}: {err}")
+        print(err)
         exit(1)
 
     @classmethod
