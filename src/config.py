@@ -1,42 +1,25 @@
 import logging
+import os
 import sys
-from configparser import ConfigParser
-from os import path
-
-_PROJECT_PATH: str = path.split(path.dirname(__file__))[0]
-_MPLC4_LOG_DIR: str = "/opt/mplc4/log"
-IGNORED_FILES: tuple = "start_log.txt"
-
-config = ConfigParser()
+import json
 
 try:
-    config.read(f"{_PROJECT_PATH}/config.conf")
+    _PATH = os.path.dirname(os.path.abspath(__file__))
+    with open(f'{_PATH}/../config.json', "r") as file:  # FIXME Исправить "шаг назад" в пути
+        cfg = dict(json.load(file))
 
-    logging_config = (
-        logging.basicConfig(
-            filename=(
-                f"{_PROJECT_PATH}/cleaner.log"
-                if config.getboolean("logging", "to_file")
-                else None
-            ),
-            format="%(asctime)s:%(levelname)s:%(message)s",
-            level={
-                "info": logging.INFO,
-                "warning": logging.WARNING,
-                "error": logging.ERROR,
-                "debug": logging.DEBUG,
-            }.get(config["logging"]["level"].lower(), "debug"),
-        )
-        if config.getboolean("logging", "logging")
-        else None
+    LOGGING_CONFIG = logging.basicConfig(
+        format = cfg['logging']['format'],
+        level = cfg['logging']['level'],
     )
-
-    getint = lambda option: config.getint("defaults", option)
-
-    MAX_DISK_USAGE: int = getint("max_disk_usage")
-    MAX_LOGS_COUNT: int = getint("max_logs_count")
-    INSPECTION_FREQUENCY: int = getint("inspection_frequency")
-
+    MAX_DISKUSAGE_PERC: int = cfg["max_diskusage_perc"]
+    INSPECTION_FREQUENCY: int = cfg["inspection_frequency"]
+    EXIT_IF_FAILS: bool = cfg["exit_if_cleaning_fails"]
+    MPLC4_PATH: str = cfg["mplc4_path"]
+    IGNORED_FILES = (
+        'start_log.txt'
+    )
+    PSQL_CFG = cfg["psql"]
 except Exception as error:
     logging.error(f' ошибка чтения конфига - "{error}", завершение работы..')
     sys.exit(1)
