@@ -130,7 +130,7 @@ class Report:
         services = (
             mplc.archive.service,
             mplc.service,
-            System.get_service("mplc4-cleaner")
+            System.get_service("arm-cleaner")
         )
         cpu_usage_perc = System.get_cpu_usage()
         mem_usage = System.get_mem_usage()
