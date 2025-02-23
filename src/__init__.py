@@ -21,4 +21,6 @@ __all__ = [
     "NotADirectoryError",
     "SystemService",
     "ServiceExistError",
+    "Report",
+    "Monitor",
 ]
