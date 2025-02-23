@@ -1,47 +1,48 @@
 import logging
+from .config import (
+    LOGGING_CONFIG,
+    MAX_DISKUSAGE_PERC,
+    INSPECTION_FREQUENCY,
+    EXIT_IF_FAILS,
+)
+from .modules import Scheduler, MPLC4, System
 
-from .config import logging_config
-from .modules.mplc4_logs_manager import MPLC4LogsManager
-from .modules.scheduler import Scheduler
-from .modules.system_service import SystemService
 
-
+# TODO В следующей версии переписать алгоритм очистки
 def main():
 
-    scheduler = Scheduler()
-    lm = MPLC4LogsManager()
+    mplc = MPLC4()
 
+    def is_limit_reached():
+        diskspace_info = System.get_disk_usage()
+        diskspace_usage = diskspace_info.used / diskspace_info.total * 100
+        out = diskspace_usage >= MAX_DISKUSAGE_PERC
+        msg = f"использовано {diskspace_usage:.0f}/{MAX_DISKUSAGE_PERC}%, лимиты: {out!s}"
+        logging.info(msg)
+        return out
 
-    @scheduler.job
-    def manage_logs():
-        if not lm.is_limits_reached():
-            logging.info(f'{lm.cls_name}: лимиты не превышены')
+    @Scheduler.job
+    def manage_arm():
+        if not is_limit_reached():
+            logging.info("лимиты не достигнуты, пропуск")
             return
-
-        logging.info(f'{lm.cls_name}: лимиты превышены')
-        lm.remove('unused')
-
-        if lm.is_limits_reached():
-            warning_msg: str = 'лимиты всё ещё превышены,' + \
-            'будут удалены используемые файлы и перезапущена служба mplc4'
-            logging.warning(f'{lm.cls_name}: {warning_msg}')
-
-            if lm.remove('used'):
-                mplc4_service = SystemService('mplc4')
-                mplc4_service.restart()
-
-            if mplc4_service.isactive() and not lm.is_limits_reached():
+        for timestamp in (i * 3_600 for i in (24, 12, 6, 3, 1)):
+            logging.info(f"очистка записей системного журнала старше {timestamp} секунд")
+            System.vacuum_journal(timestamp)
+            if not is_limit_reached():
                 return
+        logging.info("очистка журнала mplc")
+        mplc.journal.clear()
+        if not is_limit_reached():
+            return
+        logging.info("пересоздание архивных баз данных mplc")
+        mplc.service.stop()
+        mplc.archive.recreate()
+        mplc.service.start()
+        if not is_limit_reached():
+            return
+        logging.warning("после очистки лимиты всё ещё превышены")
+        if EXIT_IF_FAILS:
+            System.exit(3)
 
-            elif not mplc4_service.isactive():
-                logging.warning(
-                    f'{lm.cls_name}: не удалось запустить службу mplc4'
-                )
-
-            elif lm.is_limits_reached():
-                logging.warning(
-                    f'{lm.cls_name}: не удалось очистить физ. память доступными службе средствами'
-                )
-
-
-    scheduler.run()
+    Scheduler.run(INSPECTION_FREQUENCY)
