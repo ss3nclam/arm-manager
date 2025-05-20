@@ -31,6 +31,7 @@ class Report:
     _SUK_DICT = {"B": 0, "K": 10, "M": 20, "G": 30, "T": 40, "P": 50}
     _COLORED = True
     _OUT_WIDTH = 50
+    _err_out = "\x1b[1;31mERR\x1b[0m"
 
     @classmethod
     def _colored(cls, string: str, color: str):
@@ -104,7 +105,6 @@ class Report:
 
     def __init__(self):
         self._mplc = MPLC4()
-        self._err_out = self._colored("ERR", "red")
 
     def __str__(self):
         width = self._split_size(self._OUT_WIDTH, 3)
