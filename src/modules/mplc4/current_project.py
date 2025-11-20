@@ -31,7 +31,7 @@ class CurrentProject:
         :rtype: dict
         :raises FileNotFoundError: Если файл конфигурации не найден.
         """
-        path = f"{MPLC4_PATH}/cfg/ProjInfo.json"
+        path = f"{MPLC4_PATH}/server/cfg/ProjInfo.json"
         with open(path, "r") as file:
             return dict(json.load(file))
 
