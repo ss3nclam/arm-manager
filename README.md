@@ -28,7 +28,7 @@
 
 4. **Убедитесь в исправной работе службы**:
     ```sh
-    systemctl status arm-cleaner.py
+    systemctl status arm-cleaner.service
     ```
 
 5. **Убедитесь в исправной работе `armon`**:
