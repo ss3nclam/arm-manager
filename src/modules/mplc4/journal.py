@@ -1,5 +1,5 @@
 import os
-from ...config import MPLC4_PATH
+from ...config import MPLC4_LOG_PATH
 from ..system import System
 
 
@@ -8,7 +8,7 @@ class Journal:
 
     def __init__(self):
         self._log_owner = self.__class__.__name__
-        self._pathdir = MPLC4_PATH + "/log"
+        self._pathdir = MPLC4_LOG_PATH
 
     def _fetch_logfile_names(self):
         names_list: list = os.listdir(self._pathdir)
