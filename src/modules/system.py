@@ -8,6 +8,7 @@ import shutil
 import time
 
 from .system_service import SystemService
+from ..config import SYS_LOG_PATH
 
 ntuple_memusage = collections.namedtuple("MemUsage", "total used free")
 
@@ -336,7 +337,7 @@ class System:
         :return: Общий размер журнала в байтах.
         :rtype: int
         """
-        return cls.get_dir_size("/var/log")
+        return cls.get_dir_size(SYS_LOG_PATH)
 
     @classmethod
     def vacuum_journal(cls, timestamp: int) -> bool:
