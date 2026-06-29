@@ -3,6 +3,8 @@
     "inspection_frequency": 60,
     "exit_if_cleaning_fails": false,
     "mplc4_path": "/opt/mplc4",
+    "mplc4_log_path": "/var/log/mplc4",
+    "sys_log_path": "/var/log/journal/",
     "psql": {
         "user": "postgres",
         "manage_dbs": [

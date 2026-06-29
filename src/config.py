@@ -16,6 +16,8 @@ try:
     INSPECTION_FREQUENCY: int = cfg["inspection_frequency"]
     EXIT_IF_FAILS: bool = cfg["exit_if_cleaning_fails"]
     MPLC4_PATH: str = cfg["mplc4_path"]
+    MPLC4_LOG_PATH: str = cfg["mplc4_log_path"]
+    SYS_LOG_PATH: str = cfg["sys_log_path"]
     IGNORED_FILES = (
         'start_log.txt'
     )
